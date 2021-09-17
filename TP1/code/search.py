@@ -73,59 +73,98 @@ def tinyMazeSearch(problem):
     w = Directions.WEST
     return  [s, s, w, s, w, w, s, w]
 
+##
+# this method uses the DFS algorithm to find a path till the final state
+# 
+# @params problem: data of the maze 
+# 
+# @return a list of action that pac man has to do to reach the final state 
+##
 def depthFirstSearch(problem):
     """
     Search the deepest nodes in the search tree first.
-
-    Your search algorithm needs to return a list of actions that reaches the
-    goal. Make sure to implement a graph search algorithm.
-
-    To get started, you might want to try some of these simple commands to
-    understand the search problem that is being passed in:
-
-    print("Start:", problem.getStartState())
-    print("Is the start a goal?", problem.isGoalState(problem.getStartState()))
-    print("Start's successors:", problem.getSuccessors(problem.getStartState()))
     """
-
-    '''
-        INSÉREZ VOTRE SOLUTION À LA QUESTION 1 ICI
-    '''
-    print("Start:", problem.getStartState())
-    print("Goal:", problem.goal)
-    print("Is the start a goal?", problem.isGoalState(problem.getStartState()))
-    print("Start's successors:", problem.getSuccessors(problem.getStartState()))
-    
-    return tinyMazeSearch(problem)
-    util.raiseNotDefined()
-
-def checkIfExplored(E, c):
-    for state, parent in E:
-        if(c == state):
-            return True
-    return False
-def breadthFirstSearch(problem):
-    """Search the shallowest nodes in the search tree first."""
-    node = {'state': problem.getStartState(), 'parent': 0}
-    if(problem.isGoalState(node['state'])):
+    node = problem.getStartState()
+    if(problem.isGoalState(node)):
         return []
-    fringe = util.Queue()
-    # fringe.push(s)
-    explored = set()
+    fringe = util.Stack()
+    fringe.push(node)
+    explored =  {node:0}
     while(fringe != []):
-        s = fringe.pop()
-        if(problem.isGoalState(s)):
-            return s
+        node = fringe.pop()
+        if(problem.isGoalState(node)):
+            return buildPath(problem, explored, node)
         else:
-            for child in problem.getSuccessors(s):
+            for child, action, cost  in problem.getSuccessors(node):
                 if((checkIfExplored(explored, child)) == False):
                     fringe.push(child)
-                    explored.push({'state': child, 'parent': s})
+                    explored[child]= node, action
           
-    return fringe
-    '''
-        INSÉREZ VOTRE SOLUTION À LA QUESTION 2 ICI
-    '''
+    return "there is not solution"
+
+    util.raiseNotDefined()
+
+##
+# this method allows to know if a given node has already been explored
+#
+# @params explored is a dictionnary: key = node already explored, value = parent of the key node and action corresponding
+# @params node: we want to know if this node has already been explored
+#
+# @return boolean: true if the node has already been explored/ false otherwise
+##
+def checkIfExplored(explored, node):
+    for alreadyExplored in explored:
+        if(node == alreadyExplored):
+            return True
+    return False
+
+
+##
+# this method allows to build the path that pac man has to follow if he wants to reach the final state
+#
+# @params problem: data of the maze
+# @params explored is a dictionnary: key = node already explored, value = parent of the key node and action corresponding
+# @params goalState: coordonates of the final state
+# 
+# @return a list of action that pac man has to do to reach the final state 
+##
+def buildPath(problem, explored, goalState):
+    actionsList = []
+    node = goalState
+    while(problem.getStartState() != node):
+        actionsList.insert(0,(explored[node][1]))
+        node = explored[node][0]
+        
+    return actionsList
+
+
+##
+# this method uses the BFS algorithm to find a path till the final state
+# 
+# @params problem: data of the maze 
+# 
+# @return a list of action that pac man has to do to reach the final state 
+##
+def breadthFirstSearch(problem):
+    """Search the shallowest nodes in the search tree first."""
+    node = problem.getStartState()
+    if(problem.isGoalState(node)):
+        return []
+    fringe = util.Queue()
+    fringe.push(node)
+    explored =  {node:0}
+    while(fringe != []):
+        node = fringe.pop()
+        if(problem.isGoalState(node)):
+            return buildPath(problem, explored, node)
+        else:
+            for child, action, cost  in problem.getSuccessors(node):
+                if((checkIfExplored(explored, child)) == False):
+                    fringe.push(child)
+                    explored[child]= node, action
+          
+    return "there is not solution"
+
     util.raiseNotDefined()
 
 def uniformCostSearch(problem):
