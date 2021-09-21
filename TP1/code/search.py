@@ -88,18 +88,21 @@ def depthFirstSearch(problem):
     if(problem.isGoalState(node)):
         return []
     fringe = util.Stack()
-    fringe.push(node)
-    explored =  {node:0}
-    while(fringe != []):
-        node = fringe.pop()
-        if(problem.isGoalState(node)):
-            return buildPath(problem, explored, node)
-        else:
-            for child, action, cost  in problem.getSuccessors(node):
-                if((checkIfExplored(explored, child)) == False):
-                    fringe.push(child)
-                    explored[child]= node, action
-          
+    fringe.push([node, 0, 0])
+    explored =  {}
+    while(not fringe.isEmpty()):
+        nodeWithParent = fringe.pop()
+        node = nodeWithParent[0]
+        parent = nodeWithParent[1]
+        action = nodeWithParent[2]
+        if(not checkIfExplored(explored, node)):
+            explored[node] = parent, action
+            if(problem.isGoalState(node)):
+                return buildPath(problem, explored, node)
+            else:
+                for child, action, cost  in problem.getSuccessors(node):
+                    fringe.push([child, node, action])
+    print("here")
     return "there is not solution"
 
     util.raiseNotDefined()
@@ -153,7 +156,7 @@ def breadthFirstSearch(problem):
     fringe = util.Queue()
     fringe.push(node)
     explored =  {node:0}
-    while(fringe != []):
+    while(not fringe.isEmpty()):
         node = fringe.pop()
         if(problem.isGoalState(node)):
             return buildPath(problem, explored, node)
