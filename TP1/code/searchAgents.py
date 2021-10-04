@@ -439,7 +439,6 @@ class FoodSearchProblem:
         return successors
 
     def getSuccessorsCoord(self, coord):
-
         successors = []
         for action in [Directions.NORTH, Directions.SOUTH, Directions.EAST, Directions.WEST]:
            
@@ -510,18 +509,16 @@ def foodHeuristic(state, problem: FoodSearchProblem):
                     distance = manhattanDistance(food1, food2)
                     f1 = food1
                     f2 = food2
-        print(position)
-        print(f1)
-        d1 = min([distance(problem, position, f1), distance(problem, position, f2)])
-        d2 = distance(problem, f1, f2)
+        d1 = min(realDistance(problem, position, f1), realDistance(problem, position, f2))
+        d2 = realDistance(problem, f1, f2)
         distance =  d1 + d2
     
-    elif len(foodList) == 1: distance = distance(problem, position, foodList[0])
+    elif len(foodList) == 1: distance = realDistance(problem, position, foodList[0])
     else: distance = 0
 
     return distance
 
-def distance(problem, xy1, xy2):
+def realDistance(problem, xy1, xy2):
     if(xy1 == xy2):
         return 0
     fringe = util.Queue()
@@ -529,13 +526,14 @@ def distance(problem, xy1, xy2):
     explored =  [xy1]
     while(not fringe.isEmpty()):
         node = fringe.pop()
-        if(node == xy2):
+        if(node[0] == xy2):
             return node[1]
         else:
             for child in problem.getSuccessorsCoord(node[0]):
                 if((checkIfExplored(explored, child)) == False):
-                    fringe.push(child,node[1]+1)
+                    fringe.push((child,node[1]+1))
                     explored.append(child)
+    return 0
 
 def checkIfExplored(explored, node):
     for alreadyExplored in explored:
