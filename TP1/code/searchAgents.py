@@ -37,6 +37,7 @@ description for details.
 Good luck and happy searching!
 """
 
+from util import manhattanDistance
 from game import Directions
 from game import Agent
 from game import Actions
@@ -282,19 +283,17 @@ class CornersProblem(search.SearchProblem):
         """
         self.walls = startingGameState.getWalls()
         self.startingPosition = startingGameState.getPacmanPosition()
-        top, right = self.walls.height-2, self.walls.width-2
-        self.corners = ((1,1), (1,top), (right, 1), (right, top))
+        self.top, self.right = self.walls.height-2, self.walls.width-2
+        self.corners = ((1,1), (1,self.top), (self.right, 1), (self.right, self.top))
         for corner in self.corners:
             if not startingGameState.hasFood(*corner):
                 print('Warning: no food in corner ' + str(corner))
         self._expanded = 0 # DO NOT CHANGE; Number of search nodes expanded
         # Please add any code here which you would like to use
         # in initializing the problem
-  
-        '''
-            INSÉREZ VOTRE SOLUTION À LA QUESTION 5 ICI
-        '''
 
+        # if a corner has food, true, if it doesn't have, false
+        self.startingState = {'node': self.startingPosition, (1,1):True, (1,self.top): True, (self.right, 1):True, (self.right, self.top): True}
 
     def getStartState(self):
         """
@@ -302,22 +301,16 @@ class CornersProblem(search.SearchProblem):
         space)
         """
 
-        '''
-            INSÉREZ VOTRE SOLUTION À LA QUESTION 5 ICI
-        '''
-        
-        util.raiseNotDefined()
+        return self.startingState
 
     def isGoalState(self, state):
         """
         Returns whether this search state is a goal state of the problem.
         """
 
-        '''
-            INSÉREZ VOTRE SOLUTION À LA QUESTION 5 ICI
-        '''
-
-        util.raiseNotDefined()
+        for corner in self.corners:
+            if state[corner]: return False
+        return True
 
     def getSuccessors(self, state):
         """
@@ -339,10 +332,15 @@ class CornersProblem(search.SearchProblem):
             #   nextx, nexty = int(x + dx), int(y + dy)
             #   hitsWall = self.walls[nextx][nexty]
            
-            '''
-                INSÉREZ VOTRE SOLUTION À LA QUESTION 5 ICI
-            '''
-
+            x,y = state['node']
+            dx, dy = Actions.directionToVector(action)
+            nextx, nexty = int(x + dx), int(y + dy)
+            if not self.walls[nextx][nexty]:
+                nextState = {'node': (nextx, nexty), (1,1):state[(1,1)], (1,self.top): state[(1,self.top)], (self.right, 1):state[(self.right, 1)], (self.right, self.top): state[(self.right, self.top)]}
+                if nextState['node'] in self.corners:
+                    nextState[nextState['node']] = False
+                cost = 1
+                successors.append(( nextState, action, cost))
 
         self._expanded += 1 # DO NOT CHANGE
         return successors
@@ -375,12 +373,28 @@ def cornersHeuristic(state, problem):
     """
     corners = problem.corners # These are the corner coordinates
     walls = problem.walls # These are the walls of the maze, as a Grid (game.py)
+    foodRemaining = []
+    distance = 100000 #infini
+    for corner in corners:
+        if state[corner]:
+            foodRemaining.append(corner)
+            manhattanDistance = util.manhattanDistance(state['node'], corner)
+            if manhattanDistance < distance:
+                distance = manhattanDistance
+                nearestCorner = corner
+    numberFoodRemaining = len(foodRemaining)
+    if numberFoodRemaining == 0:
+        return 0
+    foodRemaining.remove(nearestCorner)
+    if numberFoodRemaining == 4:
+        return distance + min([problem.top + problem.right, problem.right + problem.top])
+    if numberFoodRemaining == 3:
+        distanceOther = util.manhattanDistance(foodRemaining[1], foodRemaining[0])
+        return distance + min([util.manhattanDistance(foodRemaining[0], nearestCorner) + distanceOther, util.manhattanDistance(foodRemaining[1], nearestCorner) + distanceOther])
+    if numberFoodRemaining == 2:
+        return distance + util.manhattanDistance(nearestCorner, foodRemaining[0])
+    return distance
 
-    '''
-        INSÉREZ VOTRE SOLUTION À LA QUESTION 6 ICI
-    '''
-    
-    return 0
 
 class AStarCornersAgent(SearchAgent):
     "A SearchAgent for FoodSearchProblem using A* and your foodHeuristic"
@@ -422,6 +436,20 @@ class FoodSearchProblem:
                 nextFood = state[1].copy()
                 nextFood[nextx][nexty] = False
                 successors.append( ( ((nextx, nexty), nextFood), direction, 1) )
+        return successors
+
+    def getSuccessorsCoord(self, coord):
+
+        successors = []
+        for action in [Directions.NORTH, Directions.SOUTH, Directions.EAST, Directions.WEST]:
+           
+            x,y = coord
+            dx, dy = Actions.directionToVector(action)
+            nextx, nexty = int(x + dx), int(y + dy)
+            if not self.walls[nextx][nexty]:
+                nextNode = (nextx, nexty)
+                successors.append(nextNode)
+
         return successors
 
     def getCostOfActions(self, actions):
@@ -473,11 +501,44 @@ def foodHeuristic(state, problem: FoodSearchProblem):
     problem.heuristicInfo['wallCount']
     """
     position, foodGrid = state
+    distance = 0
+    foodList = foodGrid.asList()
+    if len(foodList) > 1:
+        for food1 in foodList:
+            for food2 in foodList:
+                if manhattanDistance(food1, food2) >= distance:
+                    distance = manhattanDistance(food1, food2)
+                    f1 = food1
+                    f2 = food2
+        print(position)
+        print(f1)
+        d1 = min([distance(problem, position, f1), distance(problem, position, f2)])
+        d2 = distance(problem, f1, f2)
+        distance =  d1 + d2
+    
+    elif len(foodList) == 1: distance = distance(problem, position, foodList[0])
+    else: distance = 0
 
-    '''
-        INSÉREZ VOTRE SOLUTION À LA QUESTION 7 ICI
-    '''
+    return distance
 
+def distance(problem, xy1, xy2):
+    if(xy1 == xy2):
+        return 0
+    fringe = util.Queue()
+    fringe.push((xy1, 0))
+    explored =  [xy1]
+    while(not fringe.isEmpty()):
+        node = fringe.pop()
+        if(node == xy2):
+            return node[1]
+        else:
+            for child in problem.getSuccessorsCoord(node[0]):
+                if((checkIfExplored(explored, child)) == False):
+                    fringe.push(child,node[1]+1)
+                    explored.append(child)
 
-    return 0
-
+def checkIfExplored(explored, node):
+    for alreadyExplored in explored:
+        if(node == alreadyExplored):
+            return True
+    return False

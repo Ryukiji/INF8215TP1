@@ -89,44 +89,40 @@ def depthFirstSearch(problem):
         return []
     fringe = util.Stack()
     fringe.push([node, 0, 0])
-    explored =  {}
+    explored =  []
     while(not fringe.isEmpty()):
         nodeWithParent = fringe.pop()
         node = nodeWithParent[0]
         parent = nodeWithParent[1]
         action = nodeWithParent[2]
         if(not checkIfExplored(explored, node)):
-            explored[node] = parent, action
+            explored.append((node, (parent, action)))
             if(problem.isGoalState(node)):
                 return buildPath(problem, explored, node)
             else:
                 for child, action, cost  in problem.getSuccessors(node):
                     fringe.push([child, node, action])
-    print("here")
     return "there is not solution"
-
-    util.raiseNotDefined()
 
 ##
 # this method allows to know if a given node has already been explored
 #
-# @params explored is a dictionnary: key = node already explored, value = parent of the key node and action corresponding
+# @params explored is a list of couple: first element = node already explored, second element = parent of the key node and action corresponding
 # @params node: we want to know if this node has already been explored
 #
 # @return boolean: true if the node has already been explored/ false otherwise
 ##
 def checkIfExplored(explored, node):
     for alreadyExplored in explored:
-        if(node == alreadyExplored):
+        if(node == alreadyExplored[0]):
             return True
     return False
-
 
 ##
 # this method allows to build the path that pac man has to follow if he wants to reach the final state
 #
 # @params problem: data of the maze
-# @params explored is a dictionnary: key = node already explored, value = parent of the key node and action corresponding
+# @params explored is a list of couple: first element = node already explored, second element = parent of the key node and action corresponding
 # @params goalState: coordonates of the final state
 # 
 # @return a list of action that pac man has to do to reach the final state 
@@ -135,11 +131,22 @@ def buildPath(problem, explored, goalState):
     actionsList = []
     node = goalState
     while(problem.getStartState() != node):
-        actionsList.insert(0,(explored[node][1]))
-        node = explored[node][0]
-        
+        node, action = getAction(explored, node)
+        actionsList.insert(0,action)
     return actionsList
 
+##
+# this method allows to find a node in explored and to return his corresponding data
+#
+# @params explored is a list of couple: first element = node already explored, second element = parent of the key node and action corresponding
+# @params node: it is the node whose information is sought
+#
+# @return the parent of the node, and the action done to go from the parent to the node
+##
+def getAction(explored, node):
+    for element in explored:
+        if element[0] == node:
+            return element[1]
 
 ##
 # this method uses the BFS algorithm to find a path till the final state
@@ -155,7 +162,7 @@ def breadthFirstSearch(problem):
         return []
     fringe = util.Queue()
     fringe.push(node)
-    explored =  {node:0}
+    explored =  [(node,0)]
     while(not fringe.isEmpty()):
         node = fringe.pop()
         if(problem.isGoalState(node)):
@@ -164,12 +171,17 @@ def breadthFirstSearch(problem):
             for child, action, cost  in problem.getSuccessors(node):
                 if((checkIfExplored(explored, child)) == False):
                     fringe.push(child)
-                    explored[child]= node, action
+                    explored.append((child,(node, action)))
           
     return "there is not solution"
 
-    util.raiseNotDefined()
-
+##
+# this method uses the UCS algorithm to find a path till the final state
+# 
+# @params problem: data of the maze 
+# 
+# @return a list of action that pac man has to do to reach the final state 
+##
 def uniformCostSearch(problem):
     """Search the node of least total cost first."""
 
@@ -190,11 +202,10 @@ def uniformCostSearch(problem):
                 location = c[0]
                 if location not in explored:
                     directions = c[1]
-                    newCost = action + [directions]
-                    fringe.push((location, action + [directions]), problem.getCostOfActions(newCost))
+                    newActions = action + [directions]
+                    fringe.push((location, newActions), problem.getCostOfActions(newActions))
         explored.append(node)
     return action
-    util.raiseNotDefined()
 
 def nullHeuristic(state, problem=None):
     """
@@ -203,14 +214,37 @@ def nullHeuristic(state, problem=None):
     """
     return 0
 
+##
+# this method uses the A* algorithm to find a path till the final state
+# 
+# @params problem: data of the maze 
+# @params heuristic: method that define the heuristic used in the A* algorithm
+# 
+# @return a list of action that pac man has to do to reach the final state 
+##
 def aStarSearch(problem, heuristic=nullHeuristic):
     """Search the node that has the lowest combined cost and heuristic first."""
-    '''
-        INSÉREZ VOTRE SOLUTION À LA QUESTION 4 ICI
-    '''
-
-    util.raiseNotDefined()
-
+    node = problem.getStartState()
+    if(problem.isGoalState(node)):
+        return []    
+    
+    fringe = util.PriorityQueue()
+    fringe.push((node, []) ,0)
+    explored =  []
+    while(not fringe.isEmpty()):
+        node, action = fringe.pop()
+        if problem.isGoalState(node):
+            return action
+        if node not in explored:
+            children = problem.getSuccessors(node)
+            for c in children:
+                location = c[0]
+                if location not in explored:
+                    directions = c[1]
+                    newActions = action + [directions]
+                    fringe.push((location, newActions), problem.getCostOfActions(newActions) + heuristic(location, problem))
+        explored.append(node)
+    return action
 
 # Abbreviations
 bfs = breadthFirstSearch
