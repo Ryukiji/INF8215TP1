@@ -90,18 +90,17 @@ def depthFirstSearch(problem):
     fringe = util.Stack()
     fringe.push([node, 0, 0])
     explored =  []
-    while(not fringe.isEmpty()):
+    while (not fringe.isEmpty()):
         nodeWithParent = fringe.pop()
         node = nodeWithParent[0]
         parent = nodeWithParent[1]
         action = nodeWithParent[2]
-        if(not checkIfExplored(explored, node)):
+        if (not checkIfExplored(explored, node)):
             explored.append((node, (parent, action)))
-            if(problem.isGoalState(node)):
+            if (problem.isGoalState(node)):
                 return buildPath(problem, explored, node)
-            else:
-                for child, action, cost  in problem.getSuccessors(node):
-                    fringe.push([child, node, action])
+            for child, action, cost  in problem.getSuccessors(node):
+                fringe.push([child, node, action])
     return "there is not solution"
 
 ##
@@ -163,16 +162,15 @@ def breadthFirstSearch(problem):
     fringe = util.Queue()
     fringe.push(node)
     explored =  [(node,0)]
-    while(not fringe.isEmpty()):
+    while (not fringe.isEmpty()):
         node = fringe.pop()
-        if(problem.isGoalState(node)):
+        if (problem.isGoalState(node)):
             return buildPath(problem, explored, node)
-        else:
-            for child, action, cost  in problem.getSuccessors(node):
-                if((checkIfExplored(explored, child)) == False):
-                    fringe.push(child)
-                    explored.append((child,(node, action)))
-          
+        for child, action, cost  in problem.getSuccessors(node):
+            if((checkIfExplored(explored, child)) == False):
+                fringe.push(child)
+                explored.append((child,(node, action)))
+
     return "there is not solution"
 
 ##
@@ -193,19 +191,17 @@ def uniformCostSearch(problem):
     fringe.push((node, []) ,0)
     explored =  []
     while(not fringe.isEmpty()):
-        node, action = fringe.pop()
+        node, actions = fringe.pop()
         if problem.isGoalState(node):
-            return action
+            return actions
         if node not in explored:
-            children = problem.getSuccessors(node)
-            for c in children:
-                location = c[0]
-                if location not in explored:
-                    directions = c[1]
-                    newActions = action + [directions]
-                    fringe.push((location, newActions), problem.getCostOfActions(newActions))
+            for child in problem.getSuccessors(node):
+                location = child[0]
+                nextAction = child[1]
+                newActions = actions + [nextAction]
+                fringe.push((location, newActions), problem.getCostOfActions(newActions))
         explored.append(node)
-    return action
+    return actions
 
 def nullHeuristic(state, problem=None):
     """
@@ -232,19 +228,18 @@ def aStarSearch(problem, heuristic=nullHeuristic):
     fringe.push((node, []) ,0)
     explored =  []
     while(not fringe.isEmpty()):
-        node, action = fringe.pop()
+        node, actions = fringe.pop()
         if problem.isGoalState(node):
-            return action
+            return actions
         if node not in explored:
             children = problem.getSuccessors(node)
             for c in children:
                 location = c[0]
-                if location not in explored:
-                    directions = c[1]
-                    newActions = action + [directions]
-                    fringe.push((location, newActions), problem.getCostOfActions(newActions) + heuristic(location, problem))
+                nextAction = c[1]
+                newActions = actions + [nextAction]
+                fringe.push((location, newActions), problem.getCostOfActions(newActions) + heuristic(location, problem))
         explored.append(node)
-    return action
+    return actions
 
 # Abbreviations
 bfs = breadthFirstSearch

@@ -503,36 +503,40 @@ def foodHeuristic(state, problem: FoodSearchProblem):
     distance = 0
     foodList = foodGrid.asList()
     if len(foodList) > 1:
-        for food1 in foodList:
-            for food2 in foodList:
-                if manhattanDistance(food1, food2) >= distance:
-                    distance = manhattanDistance(food1, food2)
-                    f1 = food1
-                    f2 = food2
-        d1 = min(realDistance(problem, position, f1), realDistance(problem, position, f2))
-        d2 = realDistance(problem, f1, f2)
+        f1, f2 = findFurthestFoods(distance, foodList)
+        d1 = min(realDistanceWithBFS(problem, position, f1), realDistanceWithBFS(problem, position, f2))
+        d2 = realDistanceWithBFS(problem, f1, f2)
         distance =  d1 + d2
     
-    elif len(foodList) == 1: distance = realDistance(problem, position, foodList[0])
+    elif len(foodList) == 1: distance = realDistanceWithBFS(problem, position, foodList[0])
     else: distance = 0
 
     return distance
 
-def realDistance(problem, xy1, xy2):
+# Return the 2 furthest foods on the map
+def findFurthestFoods(distance, foodList):
+    for food1 in foodList:
+        for food2 in foodList:
+            if manhattanDistance(food1, food2) >= distance:
+                distance = manhattanDistance(food1, food2)
+                f1 = food1
+                f2 = food2
+    return f1,f2
+
+def realDistanceWithBFS(problem, xy1, xy2):
     if(xy1 == xy2):
         return 0
     fringe = util.Queue()
     fringe.push((xy1, 0))
     explored =  [xy1]
-    while(not fringe.isEmpty()):
+    while (not fringe.isEmpty()):
         node = fringe.pop()
-        if(node[0] == xy2):
+        if (node[0] == xy2):
             return node[1]
-        else:
-            for child in problem.getSuccessorsCoord(node[0]):
-                if((checkIfExplored(explored, child)) == False):
-                    fringe.push((child,node[1]+1))
-                    explored.append(child)
+        for child in problem.getSuccessorsCoord(node[0]):
+            if((checkIfExplored(explored, child)) == False):
+                fringe.push((child, node[1]+1))
+                explored.append(child)
     return 0
 
 def checkIfExplored(explored, node):
