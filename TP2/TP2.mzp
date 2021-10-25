@@ -1,10 +1,32 @@
 {
     "openFiles": [
-        "question1.mzn"
+        "question1.mzn",
+        "question2.mzn",
+        "question3.mzn",
+        "question4.mzn",
+        "data/question1-1.dzn",
+        "data/question1-2.dzn",
+        "data/question1-3.dzn",
+        "data/question3-1.dzn",
+        "data/question3-2.dzn",
+        "data/question4-1.dzn",
+        "data/question4-2.dzn",
+        "data/question4-3.dzn"
     ],
     "openTab": 0,
     "projectFiles": [
-        "question1.mzn"
+        "data/question1-1.dzn",
+        "data/question1-2.dzn",
+        "data/question1-3.dzn",
+        "data/question3-1.dzn",
+        "data/question3-2.dzn",
+        "data/question4-1.dzn",
+        "data/question4-2.dzn",
+        "data/question4-3.dzn",
+        "question1.mzn",
+        "question2.mzn",
+        "question3.mzn",
+        "question4.mzn"
     ],
     "selectedBuiltinConfigId": "org.gecode.gecode",
     "selectedBuiltinConfigVersion": "6.3.0",
