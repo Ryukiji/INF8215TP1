@@ -1,0 +1,6 @@
+output (((["["]++[((if j==1 then "\n" else "," endif++if fix(x[i,j]) < 10 then "  " else " " endif)++show(x[i,j]))++if j==c then (", f("++show(rowinsects[i]))++")," else "" endif | i in 1..r, j in 1..c, ])++["\n"])++[("f("++show(colinsects[j]))++")," | j in 1..c, ])++["]\n"];
+int: r = 2;
+int: c = 3;
+array [1..r] of int: rowinsects = [9,12];
+array [1..c] of int: colinsects = [9,7,5];
+array [1..r,1..c] of int: x;
