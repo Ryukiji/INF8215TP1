@@ -1,3 +1,5 @@
+% 2162553 Corentin HUBERT 
+% 2040063 Adam Mouttaki Bensouda
 include "globals.mzn";
 
 

@@ -1,3 +1,5 @@
+% 2162553 Corentin HUBERT 
+% 2040063 Adam Mouttaki Bensouda
 include "globals.mzn"; 
 
 int: n = 5;
@@ -20,7 +22,7 @@ constraint forall (i in 1..n) (matches[i,i] = 0);
 % Points distribution
 constraint forall (i in 1..n) (
             forall (j in 1..n where i != j) ( 
-              if matches[i,j] = 1 then matches[j,i] = 1
+              if matches[i,j] == 1 then matches[j,i] = 1
               elseif matches[i,j] == 3 then matches[j,i] = 0 
               elseif matches[i,j] == 0 then matches[j,i] = 3 
               else true
