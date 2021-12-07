@@ -29,44 +29,33 @@ from tensorflow.keras.layers import Dense
 from tensorflow.keras.utils import to_categorical
 from tensorflow.keras.optimizers import Adam 
 from tensorflow.keras. initializers import TruncatedNormal 
-
+from tensorflow.keras.regularizers import l2
+import matplotlib.pyplot as plt
 
 class MyWineTester(WineTester):
     def __init__(self):
         model = Sequential()
-
-        # initial values
-        features = Input(shape = (12,)) # number of columns - outcome
-
-        # Input layer + hidden layer 1
-        input_layer = Dense(32, activation='relu', use_bias=True)(features)
-
-        # Hidden layers > 1
-        h2 = Dense(64, activation='relu', use_bias=True)(input_layer)
-        x = layers.Dropout(0.5)(h2)
-        h3 = Dense(512, activation='relu', use_bias=True)(x)
-        h4 = Dense(32, activation='relu', use_bias=True)(h3)
-
-        # Output layer
-        out = Dense(10, activation='softmax', use_bias=True)(h4)
-        
-        model = Model(inputs = [features],
-                    outputs= [out])
-
-        #optimizer
-        adam = Adam()
-    
-        model.compile(loss  = 'categorical_crossentropy',
-                  optimizer = adam,
-                  metrics=[
-                                tf.keras.metrics.BinaryAccuracy(name='accuracy'),
-                                tf.keras.metrics.Precision(name='precision'),
-                                tf.keras.metrics.Recall(name='recall')
-                            ])
-        # model.compile(loss='categorical_crossentropy', optimizer=adam, metrics=['accuracy'])
+        model.add(Dense(units = 128, input_shape=(9,))) 
+        model.add(Activation('relu'))
+        model.add(Dense(units = 128))
+        model.add(Activation('relu'))
+        model.add(Dense(units = 128))
+        model.add(Activation('relu'))
+        model.add(Dense(units = 128))
+        model.add(Activation('relu'))
+        model.add(Dense(units = 128))
+        model.add(Activation('relu'))
+        model.add(Dense(units = 128))
+        model.add(Activation('relu'))                        
+        model.add(Dense(units = 128))
+        model.add(Activation('relu'))
+        model.add(Dense(units = 10))
+        model.add(Activation('softmax'))
+                
+        model.compile(loss='categorical_crossentropy', optimizer=Adam(learning_rate=0.0001), metrics=['accuracy'])
 
 
-        self.scaler = StandardScaler()
+        self.scaler = StandardScaler(with_mean=True, with_std=True)
         self.model = model
 
     def train(self, X_train, y_train):
@@ -109,17 +98,65 @@ class MyWineTester(WineTester):
         df = df.drop(columns=[0])
         df = df.drop(columns=[1])
         dfy = dfy.drop(columns=[0])
+
+
+
+        df_data = pd.read_csv('./data/train.csv', sep=';')
+        df_data = pd.get_dummies(df_data)
+        dfx = df_data[df_data.columns.difference(['id', 'quality', 'color_red', 'color_white', 'fixed acidity', 'citric acid'], sort=False)]
+
+    #     dfx = df_data[['fixed acidity', 'volatile acidity', 'citric acid', 'chlorides', 'free sulfur dioxide',
+    #    'total sulfur dioxide', 'density', 'pH', 'sulphates', 'alcohol']]
+        # dfx = df_data[[ 'volatile acidity', 'free sulfur dioxide',
+        #             'sulphates', 'residual sugar', 'pH', 'total sulfur dioxide', 
+        #             'chlorides', 'density', 'alcohol']]
         
-        X_train, X_val, y_train, y_val = train_test_split(df, dfy, test_size=0.2, random_state=42)
+        dfy = df_data['quality']
+
+
+        x = np.array(dfx)
+        y = np.array(dfy)       
+        X_train, X_val, y_train, y_val = train_test_split(x, y, test_size=0.2, random_state=42)
 
         
         X_train_scaled = self.scaler.fit_transform(X_train)
         X_val_scaled = self.scaler.transform(X_val)
-
+        y_true = y_val
         y_train, y_val = to_categorical(y_train, num_classes=10), to_categorical(y_val, num_classes=10)
         #fit
-        history = self.model.fit(X_train_scaled, y_train, epochs=80, validation_data=(X_val_scaled, y_val), shuffle=False, verbose=2)
-        print("hold")
+        h = self.model.fit(X_train_scaled, y_train, batch_size=64, epochs=300,
+                          verbose=2, validation_data=(X_val_scaled, y_val))
+                
+        score = self.model.evaluate(X_val_scaled, y_val, verbose=0)
+
+        plt.plot(h.history['loss'])
+        plt.plot(h.history['val_loss'])
+        plt.title('model train vs validation loss')
+        plt.ylabel('loss')
+        plt.xlabel('epoch')
+        plt.legend(['train', 'validation'], loc='upper right')
+        plt.show()
+
+        
+        samples = self.model.predict(X_val_scaled)
+    
+        test = np.argmax(samples, axis=1)
+
+        predictions = []
+        for idx, pred in enumerate(test):
+            predictions.append([pred])
+
+
+        good_pred = 0
+        for i in range(len(predictions)):
+            if predictions[i] == y_true[i]:
+                good_pred += 1
+            # else:
+            #     print(str(predictions[i]) + ' : ' + str(y_true[i]))
+        print('Accuracy: ', good_pred, ' / ', len(predictions), ' = ', good_pred/len(predictions))
+
+        print(score)
+        print(score)
 
     def predict(self, X_data):
         """
@@ -138,14 +175,19 @@ class MyWineTester(WineTester):
         :return: a 2D list of predictions with 2 columns: ID and prediction
         """
         df = pd.DataFrame(X_data)
+        columnNames= ['id','color','fixed acidity','volatile acidity',
+        'citric acid','residual sugar','chlorides','free sulfur dioxide',
+        'total sulfur dioxide','density','pH','sulphates','alcohol','quality']
         
-        df['is_white_wine'] = [1 if color == 'white' else 0 for color in df[1]]
-        df = df.drop(columns=[0])
-        df = df.drop(columns=[1])
-        X_test_scaled = self.scaler.transform(df)
+        for idz, c in enumerate(columnNames):
+            print(str(idz) + ' : ' + c)
+            df.rename(columns={idz: c})
+        
+        dfx = df[df.columns.difference([0, 1, 2, 4, 13, 'id', 'color', 'quality', 'color_red', 'color_white', 'fixed acidity', 'citric acid'], sort=False)]
+        X_test_scaled = self.scaler.transform(dfx)
         samples = self.model.predict(X_test_scaled)
-        predicts = np.maximum(samples,0)        
-        test       = np.argmax(predicts, axis=1)
+        print(dfx)
+        test = np.argmax(samples, axis=1)
         predictions = []
         for idx, pred in enumerate(test):
             predictions.append([int(X_data[idx][0]), pred])
